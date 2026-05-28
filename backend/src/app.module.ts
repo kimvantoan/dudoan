@@ -22,16 +22,22 @@ import { MatchModule } from './match/match.module';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'mysql',
-        host: configService.get<string>('DB_HOST', 'localhost'),
-        port: configService.get<number>('DB_PORT', 3306),
-        username: configService.get<string>('DB_USERNAME', 'dudoan_user'),
-        password: configService.get<string>('DB_PASSWORD', 'dudoan_password'),
-        database: configService.get<string>('DB_DATABASE', 'dudoan_db'),
-        entities: [User, Group, UserGroup, Match, Prediction, TournamentPrediction],
-        synchronize: true, // Tự động sync DB schema trong môi trường dev
-      }),
+      useFactory: (configService: ConfigService) => {
+        const host = configService.get<string>('DB_HOST', 'localhost');
+        const isCloud = host.includes('aivencloud.com') || host.includes('tidbcloud.com') || configService.get<string>('DB_SSL') === 'true';
+        
+        return {
+          type: 'mysql',
+          host,
+          port: configService.get<number>('DB_PORT', 3306),
+          username: configService.get<string>('DB_USERNAME', 'dudoan_user'),
+          password: configService.get<string>('DB_PASSWORD', 'dudoan_password'),
+          database: configService.get<string>('DB_DATABASE', 'dudoan_db'),
+          entities: [User, Group, UserGroup, Match, Prediction, TournamentPrediction],
+          synchronize: true, // Tự động sync DB schema trong môi trường dev
+          ssl: isCloud ? { rejectUnauthorized: false } : undefined,
+        };
+      },
     }),
     TypeOrmModule.forFeature([User, Group, UserGroup, Match, Prediction, TournamentPrediction]),
     AuthModule,

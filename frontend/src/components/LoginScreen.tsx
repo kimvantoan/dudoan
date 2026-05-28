@@ -62,43 +62,6 @@ export function LoginScreen({ handleGoogleLogin, handleMockLogin, isLoading }: L
             </svg>
             {isLoading ? 'Đang kết nối...' : 'Đăng nhập bằng Google'}
           </button>
-
-          {/* Dev Mock Login Segment */}
-          <div className="relative pt-6">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-slate-800"></span>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-slate-900 px-3 text-slate-500 font-semibold tracking-wider">
-                Phát Triển & Kiểm Thử
-              </span>
-            </div>
-          </div>
-
-          <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-            <div className="text-[11px] text-amber-500 font-semibold">
-              ⚡ ĐĂNG NHẬP NHANH (MOCK LOGIN)
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => handleMockLogin(1)}
-                disabled={isLoading}
-                className="bg-indigo-950 hover:bg-indigo-900 disabled:opacity-50 border border-indigo-800 text-indigo-200 text-xs font-bold py-2.5 px-2 rounded-xl transition-all cursor-pointer"
-              >
-                👤 Admin Minh
-              </button>
-              <button
-                onClick={() => handleMockLogin(2)}
-                disabled={isLoading}
-                className="bg-teal-950 hover:bg-teal-900 disabled:opacity-50 border border-teal-800 text-teal-200 text-xs font-bold py-2.5 px-2 rounded-xl transition-all cursor-pointer"
-              >
-                👤 Thanh Phát
-              </button>
-            </div>
-            <p className="text-[10px] text-slate-500">
-              Sử dụng tài khoản gieo sẵn để kiểm thử đầy đủ luồng tính điểm, bảng xếp hạng mà không cần tài khoản Google thật.
-            </p>
-          </div>
         </div>
       </div>
     </main>
