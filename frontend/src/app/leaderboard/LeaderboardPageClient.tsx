@@ -1,0 +1,54 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useApp } from '@/context/AppContext';
+import { LeaderboardTab } from '@/components/LeaderboardTab';
+
+export function LeaderboardPageClient() {
+  const {
+    groups,
+    activeGroupId,
+    setActiveGroupId,
+    leaderboard,
+    currentUser,
+    matches,
+    handleCreateGroup,
+    handleJoinGroup,
+    handleLeaveGroup,
+    showSuccess,
+    isOutrightFinalized,
+  } = useApp();
+
+  const [newGroupName, setNewGroupName] = useState('');
+  const [joinInviteCode, setJoinInviteCode] = useState('');
+
+  const onCreate = async () => {
+    await handleCreateGroup(newGroupName);
+    setNewGroupName('');
+  };
+
+  const onJoin = async () => {
+    await handleJoinGroup(joinInviteCode);
+    setJoinInviteCode('');
+  };
+
+  return (
+    <LeaderboardTab
+      groups={groups}
+      activeGroupId={activeGroupId}
+      setActiveGroupId={setActiveGroupId}
+      leaderboard={leaderboard}
+      currentUser={currentUser}
+      newGroupName={newGroupName}
+      setNewGroupName={setNewGroupName}
+      joinInviteCode={joinInviteCode}
+      setJoinInviteCode={setJoinInviteCode}
+      handleCreateGroup={onCreate}
+      handleJoinGroup={onJoin}
+      handleLeaveGroup={handleLeaveGroup}
+      showSuccess={showSuccess}
+      matches={matches}
+      isOutrightFinalized={isOutrightFinalized}
+    />
+  );
+}
