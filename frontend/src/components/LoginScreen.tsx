@@ -1,12 +1,10 @@
 import React from 'react';
 
 interface LoginScreenProps {
-  handleGoogleLogin: () => void;
-  handleMockLogin: (userId: number) => Promise<void>;
-  isLoading: boolean;
+  googleLoginUrl: string;
 }
 
-export function LoginScreen({ handleGoogleLogin, handleMockLogin, isLoading }: LoginScreenProps) {
+export function LoginScreen({ googleLoginUrl }: LoginScreenProps) {
   return (
     <main className="w-full max-w-md bg-slate-900 text-slate-100 shadow-2xl border border-slate-800 flex flex-col p-6 rounded-3xl overflow-hidden relative">
       <div className="flex items-center justify-center gap-2 mb-8">
@@ -37,10 +35,9 @@ export function LoginScreen({ handleGoogleLogin, handleMockLogin, isLoading }: L
 
         {/* Login Buttons */}
         <div className="w-full space-y-4 pt-4">
-          <button
-            onClick={handleGoogleLogin}
-            disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-100 disabled:opacity-50 text-slate-900 font-bold py-3.5 px-4 rounded-2xl shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-sm cursor-pointer"
+          <a
+            href={googleLoginUrl}
+            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-100 text-slate-900 font-bold py-3.5 px-4 rounded-2xl shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-sm cursor-pointer"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -60,8 +57,8 @@ export function LoginScreen({ handleGoogleLogin, handleMockLogin, isLoading }: L
                 d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.71-2.87c-1.04.7-2.37 1.12-4.25 1.12-3.34 0-5.86-1.81-6.76-4.51L1.39 14.8c1.98 3.89 5.96 6.56 10.61 6.56z"
               />
             </svg>
-            {isLoading ? 'Đang kết nối...' : 'Đăng nhập bằng Google'}
-          </button>
+            Đăng nhập bằng Google
+          </a>
         </div>
       </div>
     </main>

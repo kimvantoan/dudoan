@@ -14,9 +14,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
   const {
     token,
     currentUser,
-    handleGoogleLogin,
-    handleMockLogin,
-    isLoading,
+    googleLoginUrl,
     isSidebarOpen,
     setIsSidebarOpen,
     handleLogout,
@@ -43,11 +41,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
         )}
 
         <div className="flex-1 flex items-center justify-center p-4">
-          <LoginScreen
-            handleGoogleLogin={handleGoogleLogin}
-            handleMockLogin={handleMockLogin}
-            isLoading={isLoading}
-          />
+          <LoginScreen googleLoginUrl={googleLoginUrl} />
         </div>
       </div>
     );

@@ -34,6 +34,7 @@ interface AppContextType {
   showError: (msg: string) => void;
   fetchData: (authToken: string) => Promise<void>;
   handleGoogleLogin: () => void;
+  googleLoginUrl: string;
   handleMockLogin: (userId: number) => Promise<void>;
   handleLogout: () => void;
   handleSavePrediction: (matchId: number) => Promise<void>;
@@ -186,9 +187,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     fetchLeaderboard();
   }, [token, activeGroupId, API_URL]);
 
+  const googleLoginUrl = `${API_URL}/auth/google`;
+
   // Google SSO login handler
   const handleGoogleLogin = () => {
-    window.location.href = `${API_URL}/auth/google`;
+    window.location.href = googleLoginUrl;
   };
 
   // Mock login for easy local development testing
@@ -473,6 +476,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         showError,
         fetchData,
         handleGoogleLogin,
+        googleLoginUrl,
         handleMockLogin,
         handleLogout,
         handleSavePrediction,
