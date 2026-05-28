@@ -22,6 +22,29 @@ interface LeaderboardTabProps {
   isLeaderboardLoading?: boolean;
 }
 
+const LeaderboardSkeleton = () => (
+  <div className="divide-y divide-slate-850/60 animate-pulse">
+    {[...Array(5)].map((_, i) => (
+      <div key={i} className="flex items-center justify-between px-4 py-3.5">
+        <div className="flex items-center gap-3">
+          {/* Rank skeleton */}
+          <div className="w-5 h-5 bg-slate-800/80 rounded-md" />
+          {/* Avatar and name skeleton */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-slate-800/80" />
+            <div className="flex flex-col gap-1.5">
+              <div className="w-24 h-3 bg-slate-800/80 rounded" />
+              <div className="w-16 h-2 bg-slate-800/60 rounded" />
+            </div>
+          </div>
+        </div>
+        {/* Points skeleton */}
+        <div className="w-12 h-3 bg-slate-800/80 rounded" />
+      </div>
+    ))}
+  </div>
+);
+
 export function LeaderboardTab({
   groups,
   activeGroupId,
@@ -253,10 +276,7 @@ export function LeaderboardTab({
               </div>
 
               {isLoading || isLeaderboardLoading ? (
-                <div className="flex flex-col items-center justify-center py-16 text-slate-400 space-y-4">
-                  <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-xs font-bold tracking-wide text-slate-500">Đang tải bảng xếp hạng...</p>
-                </div>
+                <LeaderboardSkeleton />
               ) : leaderboard.length === 0 ? (
                 <div className="text-center py-12 text-slate-500 text-xs">
                   Chưa có dữ liệu bảng xếp hạng nhóm này.
