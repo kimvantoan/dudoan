@@ -12,6 +12,22 @@ const beVietnamPro = Be_Vietnam_Pro({
 export const metadata: Metadata = {
   title: "World Cup Predictor - Dự đoán Tỷ số Bóng đá & Tranh tài Nhóm",
   description: "Trực quan hóa dự đoán tỷ số các trận cầu đỉnh cao World Cup, tạo nhóm chơi cùng đồng nghiệp, tích lũy điểm số và thăng hạng trên BXH.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
+  openGraph: {
+    title: "World Cup Predictor - Dự đoán Tỷ số Bóng đá & Tranh tài Nhóm",
+    description: "Trực quan hóa dự đoán tỷ số các trận cầu đỉnh cao World Cup, tạo nhóm chơi cùng đồng nghiệp, tích lũy điểm số và thăng hạng trên BXH.",
+    images: [
+      {
+        url: "/logo.png",
+        width: 512,
+        height: 512,
+        alt: "World Cup Predictor Logo",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
