@@ -18,6 +18,8 @@ interface LeaderboardTabProps {
   showSuccess: (msg: string) => void;
   matches?: any[];
   isOutrightFinalized?: boolean;
+  isLoading?: boolean;
+  isLeaderboardLoading?: boolean;
 }
 
 export function LeaderboardTab({
@@ -36,6 +38,8 @@ export function LeaderboardTab({
   showSuccess,
   matches = [],
   isOutrightFinalized = false,
+  isLoading = false,
+  isLeaderboardLoading = false,
 }: LeaderboardTabProps) {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
 
@@ -248,7 +252,12 @@ export function LeaderboardTab({
                 )}
               </div>
 
-              {leaderboard.length === 0 ? (
+              {isLoading || isLeaderboardLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 text-slate-400 space-y-4">
+                  <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xs font-bold tracking-wide text-slate-500">Đang tải bảng xếp hạng...</p>
+                </div>
+              ) : leaderboard.length === 0 ? (
                 <div className="text-center py-12 text-slate-500 text-xs">
                   Chưa có dữ liệu bảng xếp hạng nhóm này.
                 </div>

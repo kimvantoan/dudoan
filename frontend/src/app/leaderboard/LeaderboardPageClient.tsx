@@ -17,10 +17,19 @@ export function LeaderboardPageClient() {
     handleLeaveGroup,
     showSuccess,
     isOutrightFinalized,
+    isLoading,
+    isLeaderboardLoading,
   } = useApp();
 
   const [newGroupName, setNewGroupName] = useState('');
   const [joinInviteCode, setJoinInviteCode] = useState('');
+
+  // Fallback: If groups are loaded but no active group is selected, select the first one
+  React.useEffect(() => {
+    if (groups.length > 0 && !activeGroupId) {
+      setActiveGroupId(groups[0].id);
+    }
+  }, [groups, activeGroupId, setActiveGroupId]);
 
   const onCreate = async () => {
     await handleCreateGroup(newGroupName);
@@ -49,6 +58,8 @@ export function LeaderboardPageClient() {
       showSuccess={showSuccess}
       matches={matches}
       isOutrightFinalized={isOutrightFinalized}
+      isLoading={isLoading}
+      isLeaderboardLoading={isLeaderboardLoading}
     />
   );
 }

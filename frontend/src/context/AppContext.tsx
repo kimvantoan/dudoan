@@ -28,6 +28,7 @@ interface AppContextType {
   successMsg: string | null;
   errorMsg: string | null;
   isLoading: boolean;
+  isLeaderboardLoading: boolean;
   isUpdatingScores: boolean;
   isSyncingApi: boolean;
   showSuccess: (msg: string) => void;
@@ -63,6 +64,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(false);
   const [isUpdatingScores, setIsUpdatingScores] = useState(false);
   const [isSyncingApi, setIsSyncingApi] = useState(false);
 
@@ -166,6 +168,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
 
     const fetchLeaderboard = async () => {
+      setIsLeaderboardLoading(true);
       try {
         const res = await fetch(`${API_URL}/predictions/leaderboard?groupId=${activeGroupId}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -182,6 +185,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (err: any) {
         console.error('Error fetching leaderboard:', err);
+      } finally {
+        setIsLeaderboardLoading(false);
       }
     };
     fetchLeaderboard();
@@ -470,6 +475,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         successMsg,
         errorMsg,
         isLoading,
+        isLeaderboardLoading,
         isUpdatingScores,
         isSyncingApi,
         showSuccess,
