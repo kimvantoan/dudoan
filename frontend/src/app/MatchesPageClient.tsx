@@ -16,6 +16,7 @@ export function MatchesPageClient() {
     handleForceUpdateScores,
     isSyncingApi,
     isUpdatingScores,
+    isLoading,
   } = useApp();
 
   return (
@@ -51,6 +52,7 @@ export function MatchesPageClient() {
         setPredictionsInput={setPredictionsInput}
         handleSavePrediction={handleSavePrediction}
         token={token}
+        isLoading={isLoading}
       />
     </div>
   );
