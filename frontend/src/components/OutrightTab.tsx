@@ -515,15 +515,6 @@ export function OutrightTab({
                               >
                                 {teamOrder.map((team, index) => {
                                   const isFirstOrSecond = index < 2;
-                                  const isSaved = getSavedValue('group_stage') && (() => {
-                                    try {
-                                      const parsed = JSON.parse(getSavedValue('group_stage') || '{}');
-                                      const savedOrder = parsed[groupName] || [];
-                                      return savedOrder[index] === team;
-                                    } catch (e) {
-                                      return false;
-                                    }
-                                  })();
 
                                   return (
                                     <Draggable
@@ -562,10 +553,6 @@ export function OutrightTab({
                                                 Đi tiếp
                                               </span>
                                             )}
-                                          </div>
-
-                                          <div className="flex items-center gap-2 shrink-0">
-                                            {isSaved && <span className="text-[10px] text-indigo-400 font-bold">✓</span>}
                                           </div>
                                         </div>
                                       )}
