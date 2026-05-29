@@ -2,6 +2,7 @@ import React from 'react';
 import { getUserAvatar } from '@/utils/avatar';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 
 interface SidebarProps {
   isSidebarOpen: boolean;
@@ -31,7 +32,7 @@ export function Sidebar({
             onClick={() => setIsSidebarOpen(false)}
             className="flex items-center gap-3"
           >
-            <img src="/world_cup_trophy.png" alt="World Cup Trophy" className="w-8 h-8 object-contain" />
+            <Image src="/world_cup_trophy.png" alt="World Cup Trophy" width={32} height={32} className="w-8 h-8 object-contain" />
             <span className="font-extrabold text-base tracking-widest bg-gradient-to-r from-amber-400 to-yellow-200 bg-clip-text text-transparent">
               WC PREDICTOR
             </span>
@@ -98,9 +99,11 @@ export function Sidebar({
       {currentUser && (
         <div className="border-t border-slate-800/80 pt-4 mt-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 overflow-hidden">
-            <img
+            <Image
               src={getUserAvatar(currentUser.username)}
               alt={currentUser.username}
+              width={32}
+              height={32}
               className="w-8 h-8 rounded-full border border-slate-750 bg-slate-800 shrink-0"
             />
             <div className="flex flex-col overflow-hidden">

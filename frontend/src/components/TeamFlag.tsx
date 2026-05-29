@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 
 interface TeamFlagProps {
   teamName: string;
@@ -10,11 +11,14 @@ export function TeamFlag({ teamName, crestUrl }: TeamFlagProps) {
 
   if (crestUrl && !hasError) {
     return (
-      <img
+      <Image
         src={crestUrl}
         alt={teamName}
+        width={32}
+        height={32}
         onError={() => setHasError(true)}
         className="w-8 h-8 rounded-full object-cover border border-slate-700 bg-slate-800"
+        unoptimized
       />
     );
   }

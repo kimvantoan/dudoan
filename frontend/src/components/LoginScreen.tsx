@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 interface LoginScreenProps {
   googleLoginUrl: string;
@@ -8,7 +9,7 @@ export function LoginScreen({ googleLoginUrl }: LoginScreenProps) {
   return (
     <main className="w-full max-w-md bg-slate-900 text-slate-100 shadow-2xl border border-slate-800 flex flex-col p-6 rounded-3xl overflow-hidden relative">
       <div className="flex items-center justify-center gap-2 mb-8">
-        <img src="/world_cup_trophy.png" alt="World Cup Trophy" className="w-8 h-8 object-contain" />
+        <Image src="/world_cup_trophy.png" alt="World Cup Trophy" width={32} height={32} className="w-8 h-8 object-contain" />
         <span className="font-extrabold text-base tracking-widest bg-gradient-to-r from-amber-400 to-yellow-200 bg-clip-text text-transparent">
           WC PREDICTOR
         </span>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { getUserAvatar } from '@/utils/avatar';
+import Image from 'next/image';
 
 interface HeaderProps {
   setIsSidebarOpen: (open: boolean) => void;
@@ -16,15 +17,17 @@ export function Header({ setIsSidebarOpen, currentUser }: HeaderProps) {
         ☰
       </button>
       <div className="flex items-center gap-2">
-        <img src="/world_cup_trophy.png" alt="World Cup Trophy" className="w-6 h-6 object-contain" />
+        <Image src="/world_cup_trophy.png" alt="World Cup Trophy" width={24} height={24} className="w-6 h-6 object-contain" />
         <span className="font-extrabold text-sm tracking-widest bg-gradient-to-r from-amber-400 to-yellow-200 bg-clip-text text-transparent">
           WC PREDICTOR
         </span>
       </div>
       {currentUser ? (
-        <img
+        <Image
           src={getUserAvatar(currentUser.username)}
           alt={currentUser.username}
+          width={28}
+          height={28}
           className="w-7 h-7 rounded-full border border-slate-700 bg-slate-855 cursor-pointer"
           onClick={() => setIsSidebarOpen(true)}
         />

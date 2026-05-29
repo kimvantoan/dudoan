@@ -1,6 +1,7 @@
 import React from 'react';
 import { getUserAvatar } from '@/utils/avatar';
 import confetti from 'canvas-confetti';
+import Image from 'next/image';
 
 interface LeaderboardTabProps {
   groups: any[];
@@ -304,9 +305,11 @@ export function LeaderboardTab({
                               {/* User Info Above Podium */}
                               <div className="flex flex-col items-center mb-3.5 text-center">
                                 <div className="relative">
-                                  <img
+                                  <Image
                                     src={getUserAvatar(leaderboard[1].username)}
                                     alt={leaderboard[1].username}
+                                    width={48}
+                                    height={48}
                                     className="w-12 h-12 rounded-full border-2 border-slate-400 bg-slate-800 shadow-md object-cover"
                                   />
                                   <span className="absolute -top-1.5 -right-1.5 text-base">🥈</span>
@@ -335,9 +338,11 @@ export function LeaderboardTab({
                               {/* User Info Above Podium */}
                               <div className="flex flex-col items-center mb-3.5 text-center scale-105 origin-bottom transition-all duration-350 hover:scale-115">
                                 <div className="relative">
-                                  <img
+                                  <Image
                                     src={getUserAvatar(leaderboard[0].username)}
                                     alt={leaderboard[0].username}
+                                    width={56}
+                                    height={56}
                                     className="w-14 h-14 rounded-full border-2 border-amber-400 bg-slate-800 shadow-lg ring-3 ring-amber-400/20 object-cover"
                                   />
                                   <span className="absolute -top-2.5 -right-2 text-lg animate-bounce">👑</span>
@@ -366,9 +371,11 @@ export function LeaderboardTab({
                               {/* User Info Above Podium */}
                               <div className="flex flex-col items-center mb-3.5 text-center">
                                 <div className="relative">
-                                  <img
+                                  <Image
                                     src={getUserAvatar(leaderboard[2].username)}
                                     alt={leaderboard[2].username}
+                                    width={40}
+                                    height={40}
                                     className="w-10 h-10 rounded-full border-2 border-amber-800 bg-slate-800 shadow-md object-cover"
                                   />
                                   <span className="absolute -top-1.5 -right-1.5 text-base">🥉</span>
@@ -421,9 +428,11 @@ export function LeaderboardTab({
 
                             {/* Avatar and Name */}
                             <div className="flex items-center gap-2">
-                              <img
+                              <Image
                                 src={getUserAvatar(row.username)}
                                 alt={row.username}
+                                width={32}
+                                height={32}
                                 className="w-8 h-8 rounded-full border border-slate-700 bg-slate-800 object-cover"
                               />
                               <div className="flex flex-col">
