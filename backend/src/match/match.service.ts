@@ -829,4 +829,42 @@ export class MatchService {
       return [];
     }
   }
+
+  async getUserPredictions(targetUserId: number): Promise<any[]> {
+    const finishedMatches = await this.matchRepository.find({
+      where: { status: 'finished' },
+      order: { startTime: 'ASC' },
+    });
+
+    const predictions = await this.predictionRepository.find({
+      where: { userId: targetUserId },
+    });
+
+    const predictionMap = new Map<number, Prediction>();
+    predictions.forEach((p) => predictionMap.set(p.matchId, p));
+
+    return finishedMatches.map((match) => {
+      const pred = predictionMap.get(match.id);
+      return {
+        matchId: match.id,
+        homeTeam: match.homeTeam,
+        awayTeam: match.awayTeam,
+        homeCrest: match.homeCrest,
+        awayCrest: match.awayCrest,
+        homeScore: match.homeScore,
+        awayScore: match.awayScore,
+        startTime: match.startTime,
+        stage: match.stage,
+        groupName: match.groupName,
+        prediction: pred
+          ? {
+              predHomeScore: pred.predHomeScore,
+              predAwayScore: pred.predAwayScore,
+              pointsEarned: pred.pointsEarned,
+              createdAt: pred.createdAt,
+            }
+          : null,
+      };
+    });
+  }
 }

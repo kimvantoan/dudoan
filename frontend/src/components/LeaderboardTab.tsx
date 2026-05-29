@@ -2,8 +2,11 @@ import React from 'react';
 import { getUserAvatar } from '@/utils/avatar';
 import confetti from 'canvas-confetti';
 import Image from 'next/image';
+import { TeamFlag } from './TeamFlag';
+import { formatMatchTime, formatMatchStage } from '@/utils/format';
 
 interface LeaderboardTabProps {
+  token: string | null;
   groups: any[];
   activeGroupId: number | null;
   setActiveGroupId: (id: number) => void;
@@ -47,6 +50,7 @@ const LeaderboardSkeleton = () => (
 );
 
 export function LeaderboardTab({
+  token,
   groups,
   activeGroupId,
   setActiveGroupId,
@@ -66,6 +70,36 @@ export function LeaderboardTab({
   isLeaderboardLoading = false,
 }: LeaderboardTabProps) {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [selectedUser, setSelectedUser] = React.useState<any | null>(null);
+  const [userHistory, setUserHistory] = React.useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    if (!selectedUser || !token) {
+      setUserHistory([]);
+      return;
+    }
+
+    const fetchHistory = async () => {
+      setHistoryLoading(true);
+      try {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const res = await fetch(`${API_URL}/predictions/user/${selectedUser.userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const result = await res.json();
+        if (result.success) {
+          setUserHistory(result.data || []);
+        }
+      } catch (err) {
+        console.error('Error fetching user prediction history:', err);
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, [selectedUser, token]);
 
   React.useEffect(() => {
     const isFinished = matches.length > 0 && matches.every((m: any) => m.status === 'finished') && isOutrightFinalized;
@@ -303,7 +337,10 @@ export function LeaderboardTab({
                           {leaderboard[1] ? (
                             <>
                               {/* User Info Above Podium */}
-                              <div className="flex flex-col items-center mb-3.5 text-center">
+                              <div
+                                onClick={() => setSelectedUser(leaderboard[1])}
+                                className="flex flex-col items-center mb-3.5 text-center cursor-pointer hover:opacity-85 transition-opacity"
+                              >
                                 <div className="relative">
                                   <Image
                                     src={getUserAvatar(leaderboard[1].username)}
@@ -336,7 +373,10 @@ export function LeaderboardTab({
                           {leaderboard[0] ? (
                             <>
                               {/* User Info Above Podium */}
-                              <div className="flex flex-col items-center mb-3.5 text-center scale-105 origin-bottom transition-all duration-350 hover:scale-115">
+                              <div
+                                onClick={() => setSelectedUser(leaderboard[0])}
+                                className="flex flex-col items-center mb-3.5 text-center scale-105 origin-bottom transition-all duration-350 hover:scale-115 cursor-pointer hover:opacity-90"
+                              >
                                 <div className="relative">
                                   <Image
                                     src={getUserAvatar(leaderboard[0].username)}
@@ -369,7 +409,10 @@ export function LeaderboardTab({
                           {leaderboard[2] ? (
                             <>
                               {/* User Info Above Podium */}
-                              <div className="flex flex-col items-center mb-3.5 text-center">
+                              <div
+                                onClick={() => setSelectedUser(leaderboard[2])}
+                                className="flex flex-col items-center mb-3.5 text-center cursor-pointer hover:opacity-85 transition-opacity"
+                              >
                                 <div className="relative">
                                   <Image
                                     src={getUserAvatar(leaderboard[2].username)}
@@ -409,7 +452,8 @@ export function LeaderboardTab({
                       return (
                         <div
                           key={row.userId}
-                          className={`flex items-center justify-between px-4 py-3 transition-all ${isCurrentUser ? 'bg-indigo-950/20' : 'hover:bg-slate-900/20'
+                          onClick={() => setSelectedUser(row)}
+                          className={`flex items-center justify-between px-4 py-3 transition-all cursor-pointer ${isCurrentUser ? 'bg-indigo-950/20' : 'hover:bg-slate-900/20'
                             }`}
                         >
                           <div className="flex items-center gap-3">
@@ -462,6 +506,116 @@ export function LeaderboardTab({
           );
         })()}
       </div>
+      
+      {/* User Prediction History Modal */}
+      {selectedUser && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl relative">
+            {/* Modal Header */}
+            <div className="flex justify-between items-center border-b border-slate-850 pb-4 shrink-0">
+              <div className="flex items-center gap-3">
+                <Image
+                  src={getUserAvatar(selectedUser.username)}
+                  alt={selectedUser.username}
+                  width={44}
+                  height={44}
+                  className="w-11 h-11 rounded-full border border-slate-700 bg-slate-800 object-cover"
+                />
+                <div>
+                  <h3 className="text-sm font-black uppercase text-slate-200 tracking-wider">
+                    Lịch sử dự đoán: {selectedUser.username}
+                  </h3>
+                  <p className="text-[10px] text-indigo-400 font-bold mt-0.5">
+                    Tổng điểm: {selectedUser.totalPoints} pts • {selectedUser.predictionsCount || 0} trận dự đoán
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="w-8 h-8 rounded-full hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-all cursor-pointer text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body (Scrollable prediction list) */}
+            <div className="flex-1 overflow-y-auto py-4 space-y-3 pr-1">
+              {historyLoading ? (
+                <div className="py-12 flex flex-col items-center justify-center gap-3">
+                  <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-xs text-slate-400 font-bold">Đang tải lịch sử dự đoán...</p>
+                </div>
+              ) : userHistory.length === 0 ? (
+                <div className="text-center py-12 text-slate-500 text-xs">
+                  Thành viên này chưa có dự đoán nào cho các trận đã kết thúc.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {userHistory.map((h: any) => {
+                    const hasPrediction = h.prediction !== null;
+                    const pts = hasPrediction ? h.prediction.pointsEarned : 0;
+                    
+                    return (
+                      <div
+                        key={h.matchId}
+                        className="bg-slate-950/40 border border-slate-850/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+                      >
+                        {/* Match Info & Teams */}
+                        <div className="flex-1 space-y-2">
+                          <div className="text-[9px] text-indigo-400 uppercase tracking-wider font-extrabold">
+                            {formatMatchStage(h.groupName, h.stage)} • 📅 {formatMatchTime(h.startTime)}
+                          </div>
+                          
+                          <div className="flex items-center gap-4">
+                            {/* Home Team */}
+                            <div className="flex items-center gap-2 min-w-0 flex-1 justify-end">
+                              <span className="text-xs font-bold truncate text-slate-200">{h.homeTeam}</span>
+                              <TeamFlag teamName={h.homeTeam} crestUrl={h.homeCrest} />
+                            </div>
+
+                            {/* Actual Score */}
+                            <div className="bg-slate-900 px-3 py-1 rounded-lg border border-slate-800 text-xs font-black text-amber-400 shrink-0 select-none">
+                              {h.homeScore} - {h.awayScore}
+                            </div>
+
+                            {/* Away Team */}
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <TeamFlag teamName={h.awayTeam} crestUrl={h.awayCrest} />
+                              <span className="text-xs font-bold truncate text-slate-200">{h.awayTeam}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* User's Prediction */}
+                        <div className="sm:border-l sm:border-slate-850/80 sm:pl-4 flex sm:flex-col items-center justify-between sm:justify-center gap-2 shrink-0">
+                          <div className="text-right sm:text-center">
+                            <span className="text-[10px] text-slate-500 block">Dự đoán</span>
+                            <span className={`text-xs font-extrabold ${hasPrediction ? 'text-indigo-400' : 'text-slate-500'}`}>
+                              {hasPrediction ? `🔮 ${h.prediction.predHomeScore} - ${h.prediction.predAwayScore}` : '❌ Không đoán'}
+                            </span>
+                          </div>
+
+                          <div className="text-right sm:text-center">
+                            <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${
+                              pts === 3 
+                                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/25'
+                                : pts === 1
+                                  ? 'bg-slate-400/10 text-slate-300 border border-slate-400/25'
+                                  : 'bg-rose-500/5 text-rose-500/50 border border-rose-500/10'
+                            }`}>
+                              +{pts} điểm
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

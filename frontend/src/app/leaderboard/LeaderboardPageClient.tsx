@@ -6,6 +6,7 @@ import { LeaderboardTab } from '@/components/LeaderboardTab';
 
 export function LeaderboardPageClient() {
   const {
+    token,
     groups,
     activeGroupId,
     setActiveGroupId,
@@ -43,6 +44,7 @@ export function LeaderboardPageClient() {
 
   return (
     <LeaderboardTab
+      token={token}
       groups={groups}
       activeGroupId={activeGroupId}
       setActiveGroupId={setActiveGroupId}

@@ -177,4 +177,17 @@ export class MatchController {
       data: teams,
     };
   }
+
+  // 10. API Lấy lịch sử dự đoán của một thành viên với các trận đã kết thúc
+  @Get('predictions/user/:userId')
+  @UseGuards(JwtAuthGuard)
+  async getUserPredictions(
+    @Param('userId', ParseIntPipe) targetUserId: number,
+  ) {
+    const data = await this.matchService.getUserPredictions(targetUserId);
+    return {
+      success: true,
+      data,
+    };
+  }
 }
