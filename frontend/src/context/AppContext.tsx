@@ -33,6 +33,7 @@ interface AppContextType {
   showSuccess: (msg: string) => void;
   showError: (msg: string) => void;
   fetchData: (authToken?: string | null) => Promise<void>;
+  isMounted: boolean;
   handleGoogleLogin: () => void;
   googleLoginUrl: string;
   handleMockLogin: (userId: number) => Promise<void>;
@@ -63,6 +64,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(false);
 
+  const [isMounted, setIsMounted] = useState(false);
+
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
   // Load token & user from localStorage on mount
@@ -73,6 +76,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setToken(savedToken);
       setCurrentUser(JSON.parse(savedUser));
     }
+    setIsMounted(true);
   }, []);
 
   const showSuccess = (msg: string) => {
@@ -347,6 +351,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         errorMsg,
         isLoading,
         isLeaderboardLoading,
+        isMounted,
         showSuccess,
         showError,
         fetchData,

@@ -20,7 +20,18 @@ function ShellContent({ children }: { children: React.ReactNode }) {
     handleLogout,
     successMsg,
     errorMsg,
+    isMounted,
   } = useApp();
+
+  // Show a clean loading screen on mount to prevent Next.js hydration mismatch
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-100 font-sans">
+        <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-sm font-bold text-slate-400">Đang tải...</p>
+      </div>
+    );
+  }
 
   // If not logged in and not on the auth callback page, show login screen
   if (!token && !isAuthCallback) {
@@ -86,7 +97,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Main Application Layout with Sidebar */}
-      <div className="flex-1 flex flex-col md:flex-row min-h-screen relative overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row min-h-screen relative overflow-x-hidden md:overflow-hidden">
         <Header setIsSidebarOpen={setIsSidebarOpen} currentUser={currentUser} />
 
         {/* Sidebar Backdrop Overlay on Mobile */}
@@ -104,8 +115,8 @@ function ShellContent({ children }: { children: React.ReactNode }) {
           handleLogout={handleLogout}
         />
 
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto bg-slate-950 p-4 md:p-8 flex flex-col max-h-[calc(100vh-50px)] md:max-h-screen">
+        {/* Main Content Area: Scroll naturally on mobile, nested scroll on desktop */}
+        <main className="flex-1 bg-slate-950 p-4 md:p-8 flex flex-col md:overflow-y-auto md:max-h-screen">
           <div className="flex-1 max-w-2xl w-full mx-auto space-y-4">
             {children}
           </div>
