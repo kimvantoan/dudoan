@@ -32,7 +32,7 @@ export class MatchService {
     private readonly tpRepository: Repository<TournamentPrediction>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   // 1. Lấy danh sách trận đấu và dự đoán của người dùng
   async getMatchesForUser(userId?: number): Promise<any[]> {
@@ -42,8 +42,8 @@ export class MatchService {
 
     const predictions = userId
       ? await this.predictionRepository.find({
-          where: { userId },
-        })
+        where: { userId },
+      })
       : [];
 
     const predictionMap = new Map<number, Prediction>();
@@ -55,11 +55,11 @@ export class MatchService {
         ...match,
         userPrediction: pred
           ? {
-              predHomeScore: pred.predHomeScore,
-              predAwayScore: pred.predAwayScore,
-              pointsEarned: pred.pointsEarned,
-              createdAt: pred.createdAt,
-            }
+            predHomeScore: pred.predHomeScore,
+            predAwayScore: pred.predAwayScore,
+            pointsEarned: pred.pointsEarned,
+            createdAt: pred.createdAt,
+          }
           : null,
       };
     });
@@ -246,8 +246,11 @@ export class MatchService {
       for (const st of standingsResponse.standings) {
         const groupName = st.group;
         const table = st.table || [];
-        const teamsInOrder = table.map((row: any) => row.team ? (row.team.shortName || row.team.name) : '');
-        actualStandingsMap.set(groupName, teamsInOrder);
+        const isGroupFinished = table.length > 0 && table.every((row: any) => row.playedGames >= 3);
+        if (isGroupFinished) {
+          const teamsInOrder = table.map((row: any) => row.team ? (row.team.shortName || row.team.name) : '');
+          actualStandingsMap.set(groupName, teamsInOrder);
+        }
       }
     }
 
@@ -273,7 +276,7 @@ export class MatchService {
     const leaderboard = members.map((member) => {
       const userPreds = predictions.filter((p) => p.userId === member.userId);
       const matchPoints = userPreds.reduce((sum, p) => sum + p.pointsEarned, 0);
-      
+
       const perfectMatchesCount = userPreds.filter((p) => p.pointsEarned === 3).length;
 
       // 1. Tính điểm dự đoán vòng bảng (group_stage) -> +10 điểm nếu trúng cả nhất & nhì bảng
@@ -363,11 +366,11 @@ export class MatchService {
   }
 
   async getActualStandings(): Promise<any> {
-    const cacheKey = 'wc_actual_standings';
+    const cacheKey = 'wc_actual_standings_v2';
     let cached = await this.cacheManager.get<any>(cacheKey);
     if (!cached) {
       try {
-        cached = await this.fetchFromApi('/v4/competitions/WC/standings?season=2026');
+        cached = await this.fetchFromApi('/v4/competitions/WC/standings');
         if (cached) {
           // Lưu cache trong 1 ngày
           await this.cacheManager.set(cacheKey, cached, 24 * 60 * 60 * 1000);
@@ -418,7 +421,7 @@ export class MatchService {
         const fourthPlace = table.find((row: any) => row.position === 4);
         if (fourthPlace && fourthPlace.team) {
           const teamName = fourthPlace.team.shortName || fourthPlace.team.name;
-          const groupMatches = allMatches.filter(m => m.groupName === st.group);
+          const groupMatches = allMatches.filter(m => m.groupName && m.groupName.replace('GROUP_', 'Group ') === st.group);
           const lastMatchTime = groupMatches.reduce((max, m) => {
             const t = new Date(m.startTime).getTime();
             return t > max ? t : max;
@@ -711,7 +714,7 @@ export class MatchService {
 
           if (hasChanges) {
             await this.matchRepository.save(match);
-            
+
             // Nếu trận đấu hoàn thành, tính điểm cho các dự đoán tương ứng
             if (status === 'finished' && homeScore !== null && awayScore !== null) {
               const predictions = await this.predictionRepository.find({
@@ -836,10 +839,10 @@ export class MatchService {
           group,
           squad: t.squad
             ? t.squad.map((p: any) => ({
-                id: p.id,
-                name: p.name,
-                position: p.position,
-              }))
+              id: p.id,
+              name: p.name,
+              position: p.position,
+            }))
             : [],
         };
       });
@@ -881,11 +884,11 @@ export class MatchService {
         groupName: match.groupName,
         prediction: pred
           ? {
-              predHomeScore: pred.predHomeScore,
-              predAwayScore: pred.predAwayScore,
-              pointsEarned: pred.pointsEarned,
-              createdAt: pred.createdAt,
-            }
+            predHomeScore: pred.predHomeScore,
+            predAwayScore: pred.predAwayScore,
+            pointsEarned: pred.pointsEarned,
+            createdAt: pred.createdAt,
+          }
           : null,
       };
     });
