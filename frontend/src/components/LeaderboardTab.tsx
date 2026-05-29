@@ -4,6 +4,7 @@ import confetti from 'canvas-confetti';
 import Image from 'next/image';
 import { TeamFlag } from './ui/TeamFlag';
 import { formatMatchTime, formatMatchStage } from '@/utils/format';
+import { matchService } from '@/services/matchService';
 
 interface LeaderboardTabProps {
   token: string | null;
@@ -83,14 +84,8 @@ export function LeaderboardTab({
     const fetchHistory = async () => {
       setHistoryLoading(true);
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-        const res = await fetch(`${API_URL}/predictions/user/${selectedUser.userId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const result = await res.json();
-        if (result.success) {
-          setUserHistory(result.data || []);
-        }
+        const result = await matchService.getUserPredictions(selectedUser.userId);
+        setUserHistory(result.data || []);
       } catch (err) {
         console.error('Error fetching user prediction history:', err);
       } finally {

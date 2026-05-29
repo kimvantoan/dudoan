@@ -146,27 +146,7 @@ export class MatchController {
     };
   }
 
-  // 7. Developer API: Kích hoạt thủ công cập nhật kết quả các trận đấu đã đá
-  @Post('matches/force-update-scores')
-  @UseGuards(JwtAuthGuard)
-  async forceUpdateScores() {
-    const count = await this.matchService.updateFinishedMatchesAndPoints();
-    return {
-      success: true,
-      message: `Successfully processed ${count} matches.`,
-    };
-  }
 
-  // 8. API Đồng bộ hóa dữ liệu từ football-data.org bên ngoài
-  @Post('matches/sync')
-  @UseGuards(JwtAuthGuard)
-  async syncMatches() {
-    const count = await this.matchService.syncMatchesFromApi();
-    return {
-      success: true,
-      message: `Successfully synchronized ${count} match changes from external football-data.org API.`,
-    };
-  }
 
   // 9. API Lấy danh sách đội tuyển và cầu thủ tham gia giải đấu từ football-data.org (Công khai)
   @Get('teams')

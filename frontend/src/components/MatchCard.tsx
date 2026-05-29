@@ -101,24 +101,30 @@ export function MatchCard({ match, token, onSavePrediction }: MatchCardProps) {
           ) : (
             <div className="flex items-center gap-1">
               <input
-                type="number"
-                min="0"
-                max="99"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 disabled={isLocked || !token}
                 placeholder="?"
                 value={homePred}
-                onChange={(e) => setHomePred(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+                  setHomePred(val);
+                }}
                 className="w-10 h-10 bg-slate-900 disabled:bg-slate-950 disabled:text-slate-650 rounded-xl text-center font-extrabold text-sm border border-slate-800 focus:border-indigo-500 focus:outline-none"
               />
               <span className="text-slate-600 font-bold">:</span>
               <input
-                type="number"
-                min="0"
-                max="99"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 disabled={isLocked || !token}
                 placeholder="?"
                 value={awayPred}
-                onChange={(e) => setAwayPred(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+                  setAwayPred(val);
+                }}
                 className="w-10 h-10 bg-slate-900 disabled:bg-slate-950 disabled:text-slate-650 rounded-xl text-center font-extrabold text-sm border border-slate-800 focus:border-indigo-500 focus:outline-none"
               />
             </div>

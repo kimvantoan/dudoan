@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import confetti from 'canvas-confetti';
+import { matchService } from '@/services/matchService';
 
 interface AppContextType {
   token: string | null;
@@ -29,8 +30,6 @@ interface AppContextType {
   errorMsg: string | null;
   isLoading: boolean;
   isLeaderboardLoading: boolean;
-  isUpdatingScores: boolean;
-  isSyncingApi: boolean;
   showSuccess: (msg: string) => void;
   showError: (msg: string) => void;
   fetchData: (authToken?: string | null) => Promise<void>;
@@ -43,8 +42,6 @@ interface AppContextType {
   handleJoinGroup: (code: string) => Promise<void>;
   handleLeaveGroup: (groupId: number) => Promise<void>;
   handleSaveOutright: (type: string, value: string) => Promise<void>;
-  handleForceUpdateScores: () => Promise<void>;
-  handleSyncApiMatches: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -65,8 +62,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLeaderboardLoading, setIsLeaderboardLoading] = useState(false);
-  const [isUpdatingScores, setIsUpdatingScores] = useState(false);
-  const [isSyncingApi, setIsSyncingApi] = useState(false);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -103,59 +98,39 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const fetchData = useCallback(async (authToken?: string | null) => {
     setIsLoading(true);
     try {
-      const headers: any = {};
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
-
       // 1. Fetch matches
-      const matchesRes = await fetch(`${API_URL}/matches`, {
-        headers,
+      const matchesData = await matchService.getMatches();
+      setMatches(matchesData.data);
+      
+      // Populate inputs with existing predictions
+      const inputs: any = {};
+      matchesData.data.forEach((m: any) => {
+        if (m.userPrediction) {
+          inputs[m.id] = {
+            home: m.userPrediction.predHomeScore.toString(),
+            away: m.userPrediction.predAwayScore.toString(),
+          };
+        }
       });
-      const matchesData = await matchesRes.json();
-      if (matchesData.success) {
-        setMatches(matchesData.data);
-        
-        // Populate inputs with existing predictions
-        const inputs: any = {};
-        matchesData.data.forEach((m: any) => {
-          if (m.userPrediction) {
-            inputs[m.id] = {
-              home: m.userPrediction.predHomeScore.toString(),
-              away: m.userPrediction.predAwayScore.toString(),
-            };
-          }
-        });
-        setPredictionsInput((prev) => ({ ...prev, ...inputs }));
-      }
+      setPredictionsInput((prev) => ({ ...prev, ...inputs }));
 
       // 2. Fetch groups & tournament predictions if logged in
       if (authToken) {
-        const groupsRes = await fetch(`${API_URL}/groups`, {
-          headers,
-        });
-        const groupsData = await groupsRes.json();
-        if (groupsData.success) {
-          setGroups(groupsData.data);
-          if (groupsData.data.length > 0 && !activeGroupId) {
-            setActiveGroupId(groupsData.data[0].id);
-          }
+        const groupsData = await matchService.getGroups();
+        setGroups(groupsData.data);
+        if (groupsData.data.length > 0 && !activeGroupId) {
+          setActiveGroupId(groupsData.data[0].id);
         }
 
-        const tpRes = await fetch(`${API_URL}/tournament-predictions`, {
-          headers,
+        const tpData = await matchService.getTournamentPredictions();
+        setTournamentPredictions(tpData.data);
+        const inputsOutright = { winner: '', first_out: '', golden_boot: '' };
+        tpData.data.forEach((p: any) => {
+          if (p.type in inputsOutright) {
+            inputsOutright[p.type as keyof typeof inputsOutright] = p.value;
+          }
         });
-        const tpData = await tpRes.json();
-        if (tpData.success) {
-          setTournamentPredictions(tpData.data);
-          const inputs = { winner: '', first_out: '', golden_boot: '' };
-          tpData.data.forEach((p: any) => {
-            if (p.type in inputs) {
-              inputs[p.type as keyof typeof inputs] = p.value;
-            }
-          });
-          setOutrightInput(inputs);
-        }
+        setOutrightInput(inputsOutright);
       } else {
         setGroups([]);
         setTournamentPredictions([]);
@@ -167,7 +142,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [API_URL, activeGroupId]);
+  }, [activeGroupId]);
 
   // Load database whenever token changes (including null for guests)
   useEffect(() => {
@@ -187,18 +162,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const fetchLeaderboard = async () => {
       setIsLeaderboardLoading(true);
       try {
-        const res = await fetch(`${API_URL}/predictions/leaderboard?groupId=${activeGroupId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        if (data.success) {
-          if (data.data && typeof data.data === 'object' && 'leaderboard' in data.data) {
-            setLeaderboard(data.data.leaderboard);
-            setIsOutrightFinalized(!!data.data.isOutrightFinalized);
-          } else {
-            setLeaderboard(data.data || []);
-            setIsOutrightFinalized(false);
-          }
+        const result = await matchService.getLeaderboard(activeGroupId);
+        if (result.data && typeof result.data === 'object' && 'leaderboard' in result.data) {
+          setLeaderboard(result.data.leaderboard);
+          setIsOutrightFinalized(!!result.data.isOutrightFinalized);
+        } else {
+          setLeaderboard(result.data || []);
+          setIsOutrightFinalized(false);
         }
       } catch (err: any) {
         console.error('Error fetching leaderboard:', err);
@@ -207,7 +177,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     };
     fetchLeaderboard();
-  }, [token, activeGroupId, API_URL]);
+  }, [token, activeGroupId]);
 
   const googleLoginUrl = `${API_URL}/auth/google`;
 
@@ -220,18 +190,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const handleMockLogin = async (userId: number) => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_URL}/auth/mock-login/${userId}`);
-      const result = await res.json();
-      if (result.success) {
-        const { token: jwtToken, user } = result.data;
-        localStorage.setItem('token', jwtToken);
-        localStorage.setItem('user', JSON.stringify(user));
-        setToken(jwtToken);
-        setCurrentUser(user);
-        showSuccess(`Chào mừng ${user.username} đã đăng nhập!`);
-      } else {
-        showError(result.message || 'Đăng nhập giả lập thất bại');
-      }
+      const result = await matchService.mockLogin(userId);
+      const { token: jwtToken, user } = result.data;
+      localStorage.setItem('token', jwtToken);
+      localStorage.setItem('user', JSON.stringify(user));
+      setToken(jwtToken);
+      setCurrentUser(user);
+      showSuccess(`Chào mừng ${user.username} đã đăng nhập!`);
     } catch (err: any) {
       showError('Lỗi kết nối: ' + err.message);
     } finally {
@@ -276,31 +241,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const res = await fetch(`${API_URL}/predictions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          matchId,
-          predHomeScore: homeScore,
-          predAwayScore: awayScore,
-        }),
+      await matchService.savePrediction(matchId, homeScore, awayScore);
+      showSuccess('Lưu dự đoán thành công!');
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.8 },
       });
-
-      const result = await res.json();
-      if (result.success) {
-        showSuccess('Lưu dự đoán thành công!');
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.8 },
-        });
-        fetchData(token);
-      } else {
-        showError(result.message || 'Lưu dự đoán thất bại.');
-      }
+      fetchData(token);
     } catch (err: any) {
       showError('Lỗi lưu dự đoán: ' + err.message);
     }
@@ -311,22 +259,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!token || !name.trim()) return;
 
     try {
-      const res = await fetch(`${API_URL}/groups`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ name }),
-      });
-      const result = await res.json();
-      if (result.success) {
-        showSuccess(`Tạo nhóm "${result.data.name}" thành công!`);
-        fetchData(token);
-        setActiveGroupId(result.data.id);
-      } else {
-        showError(result.message || 'Tạo nhóm thất bại');
-      }
+      const result = await matchService.createGroup(name);
+      showSuccess(`Tạo nhóm "${result.data.name}" thành công!`);
+      fetchData(token);
+      setActiveGroupId(result.data.id);
     } catch (err: any) {
       showError('Lỗi tạo nhóm: ' + err.message);
     }
@@ -337,24 +273,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!token || !code.trim()) return;
 
     try {
-      const res = await fetch(`${API_URL}/groups/join`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ inviteCode: code }),
-      });
-      const result = await res.json();
-      if (result.success) {
-        showSuccess(`Tham gia nhóm "${result.data.name}" thành công!`);
-        fetchData(token);
-        setActiveGroupId(result.data.id);
-      } else {
-        showError(result.message || 'Mã mời không đúng hoặc bạn đã ở trong nhóm');
-      }
+      const result = await matchService.joinGroup(code);
+      showSuccess(`Tham gia nhóm "${result.data.name}" thành công!`);
+      fetchData(token);
+      setActiveGroupId(result.data.id);
     } catch (err: any) {
-      showError('Lỗi tham gia nhóm: ' + err.message);
+      showError('Mã mời không đúng hoặc bạn đã ở trong nhóm');
     }
   };
 
@@ -363,28 +287,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!token) return;
 
     try {
-      const res = await fetch(`${API_URL}/groups/leave`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ groupId }),
-      });
-      const result = await res.json();
-      if (result.success) {
-        showSuccess('Rời nhóm thành công!');
+      await matchService.leaveGroup(groupId);
+      showSuccess('Rời nhóm thành công!');
 
-        // Determine the next group to focus on
-        const remainingGroups = groups.filter((g) => g.id !== groupId);
-        const nextGroupId = remainingGroups.length > 0 ? remainingGroups[0].id : null;
-        setActiveGroupId(nextGroupId);
+      // Determine the next group to focus on
+      const remainingGroups = groups.filter((g) => g.id !== groupId);
+      const nextGroupId = remainingGroups.length > 0 ? remainingGroups[0].id : null;
+      setActiveGroupId(nextGroupId);
 
-        // Refresh groups data
-        await fetchData(token);
-      } else {
-        showError(result.message || 'Rời nhóm thất bại.');
-      }
+      // Refresh groups data
+      await fetchData(token);
     } catch (err: any) {
       showError('Lỗi rời nhóm: ' + err.message);
     }
@@ -399,77 +311,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const res = await fetch(`${API_URL}/tournament-predictions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ type, value }),
-      });
-      const result = await res.json();
-      if (result.success) {
-        showSuccess('Lưu dự đoán dài hạn thành công!');
-        fetchData(token);
-      } else {
-        showError(result.message || 'Không thể lưu dự đoán.');
-      }
+      await matchService.saveTournamentPrediction(type, value);
+      showSuccess('Lưu dự đoán dài hạn thành công!');
+      fetchData(token);
     } catch (err: any) {
       showError('Lỗi: ' + err.message);
-    }
-  };
-
-  // Developer control to force simulation of match score updates
-  const handleForceUpdateScores = async () => {
-    if (!token) return;
-    setIsUpdatingScores(true);
-    try {
-      const res = await fetch(`${API_URL}/matches/force-update-scores`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const result = await res.json();
-      if (result.success) {
-        showSuccess(result.message || 'Cập nhật tỉ số thành công!');
-        confetti({
-          particleCount: 150,
-          spread: 80,
-          origin: { y: 0.6 },
-        });
-        fetchData(token);
-      }
-    } catch (err: any) {
-      showError('Lỗi cập nhật: ' + err.message);
-    } finally {
-      setIsUpdatingScores(false);
-    }
-  };
-
-  // Developer control to sync matches from external API
-  const handleSyncApiMatches = async () => {
-    if (!token) return;
-    setIsSyncingApi(true);
-    try {
-      const res = await fetch(`${API_URL}/matches/sync`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const result = await res.json();
-      if (result.success) {
-        showSuccess(result.message || 'Đồng bộ dữ liệu giải đấu thành công!');
-        confetti({
-          particleCount: 150,
-          spread: 80,
-          origin: { y: 0.6 },
-        });
-        fetchData(token);
-      } else {
-        showError(result.message || 'Đồng bộ thất bại.');
-      }
-    } catch (err: any) {
-      showError('Lỗi đồng bộ: ' + err.message);
-    } finally {
-      setIsSyncingApi(false);
     }
   };
 
@@ -501,8 +347,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         errorMsg,
         isLoading,
         isLeaderboardLoading,
-        isUpdatingScores,
-        isSyncingApi,
         showSuccess,
         showError,
         fetchData,
@@ -515,8 +359,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         handleJoinGroup,
         handleLeaveGroup,
         handleSaveOutright,
-        handleForceUpdateScores,
-        handleSyncApiMatches,
       }}
     >
       {children}
