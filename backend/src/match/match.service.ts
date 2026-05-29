@@ -367,7 +367,7 @@ export class MatchService {
     let cached = await this.cacheManager.get<any>(cacheKey);
     if (!cached) {
       try {
-        cached = await this.fetchFromApi('/v4/competitions/WC/standings');
+        cached = await this.fetchFromApi('/v4/competitions/WC/standings?season=2026');
         if (cached) {
           // Lưu cache trong 1 ngày
           await this.cacheManager.set(cacheKey, cached, 24 * 60 * 60 * 1000);
@@ -385,7 +385,7 @@ export class MatchService {
     if (cached) return cached;
 
     try {
-      const response = await this.fetchFromApi('/v4/competitions/WC/scorers');
+      const response = await this.fetchFromApi('/v4/competitions/WC/scorers?season=2026');
       if (!response || !response.scorers || response.scorers.length === 0) return [];
 
       const maxGoals = response.scorers[0].goals;
@@ -629,7 +629,7 @@ export class MatchService {
   async syncMatchesFromApi(): Promise<number> {
     try {
       this.logger.log('Syncing matches from football-data.org...');
-      const response = await this.fetchFromApi('/v4/competitions/WC/matches');
+      const response = await this.fetchFromApi('/v4/competitions/WC/matches?season=2026');
       if (!response || !response.matches) {
         this.logger.warn('No matches found in API response.');
         return 0;
@@ -642,14 +642,27 @@ export class MatchService {
         const awayTeamName = apiMatch.awayTeam?.shortName || apiMatch.awayTeam?.name || 'Chưa xác định';
         const homeCrest = apiMatch.homeTeam?.crest || null;
         const awayCrest = apiMatch.awayTeam?.crest || null;
-        const startTime = new Date(apiMatch.utcDate);
-        const status = apiMatch.status === 'FINISHED' ? 'finished' : 'scheduled';
+        const originalStartTime = new Date(apiMatch.utcDate);
+        const startTime = new Date(originalStartTime);
+        // Shift 2022 World Cup matches to 2026 so they act as future matches for simulation/testing
+        if (originalStartTime.getFullYear() === 2022) {
+          startTime.setFullYear(2026);
+        }
+
+        const now = new Date();
+        let status: 'scheduled' | 'finished' = apiMatch.status === 'FINISHED' ? 'finished' : 'scheduled';
+        let homeScore = apiMatch.score?.fullTime?.home ?? null;
+        let awayScore = apiMatch.score?.fullTime?.away ?? null;
+
+        // If the shifted match date is in the future, treat it as a scheduled match
+        if (startTime > now) {
+          status = 'scheduled';
+          homeScore = null;
+          awayScore = null;
+        }
+
         const groupName = apiMatch.group || null;
         const stage = apiMatch.stage || null;
-        
-        // football-data.org v4 returns scores in fullTime
-        const homeScore = apiMatch.score?.fullTime?.home;
-        const awayScore = apiMatch.score?.fullTime?.away;
 
         let match = await this.matchRepository.findOne({ where: { externalId } });
 
@@ -683,11 +696,11 @@ export class MatchService {
             match.status = status;
             hasChanges = true;
           }
-          if (homeScore !== undefined && match.homeScore !== homeScore) {
+          if (match.homeScore !== homeScore) {
             match.homeScore = homeScore;
             hasChanges = true;
           }
-          if (awayScore !== undefined && match.awayScore !== awayScore) {
+          if (match.awayScore !== awayScore) {
             match.awayScore = awayScore;
             hasChanges = true;
           }
@@ -713,6 +726,17 @@ export class MatchService {
                 );
                 await this.predictionRepository.save(pred);
               }
+            } else if (status === 'scheduled') {
+              // Reset points if the match is reset to scheduled
+              const predictions = await this.predictionRepository.find({
+                where: { matchId: match.id },
+              });
+              for (const pred of predictions) {
+                if (pred.pointsEarned !== 0) {
+                  pred.pointsEarned = 0;
+                  await this.predictionRepository.save(pred);
+                }
+              }
             }
             count++;
           }
@@ -726,8 +750,8 @@ export class MatchService {
             awayCrest,
             startTime,
             status,
-            homeScore: homeScore ?? null,
-            awayScore: awayScore ?? null,
+            homeScore,
+            awayScore,
             groupName,
             stage,
           });
@@ -766,7 +790,7 @@ export class MatchService {
       }
 
       // 2. Lấy danh sách bảng đấu từ API để map nhóm (group) cho các đội
-      const standingsResponse = await this.fetchFromApi('/v4/competitions/WC/standings');
+      const standingsResponse = await this.fetchFromApi('/v4/competitions/WC/standings?season=2026');
       const teamGroupMap = new Map<number, string>();
       if (standingsResponse && standingsResponse.standings) {
         for (const st of standingsResponse.standings) {
@@ -782,7 +806,7 @@ export class MatchService {
       }
 
       // 3. Lấy danh sách các đội tuyển
-      const response = await this.fetchFromApi('/v4/competitions/WC/teams');
+      const response = await this.fetchFromApi('/v4/competitions/WC/teams?season=2026');
       if (!response || !response.teams) {
         return [];
       }
