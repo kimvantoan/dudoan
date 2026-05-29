@@ -1,5 +1,6 @@
-import React from 'react';
 import { Metadata } from 'next';
+
+export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
   title: "Quy tắc & Luật tính điểm - World Cup Predictor",
