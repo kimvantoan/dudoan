@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { AppProvider, useApp } from '@/context/AppContext';
-import { LoginScreen } from './LoginScreen';
+import { LoginScreen } from '../LoginScreen';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { usePathname } from 'next/navigation';

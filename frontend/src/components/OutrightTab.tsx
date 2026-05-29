@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TeamFlag } from './TeamFlag';
+import { TeamFlag } from './ui/TeamFlag';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 interface OutrightTabProps {

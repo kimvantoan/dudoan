@@ -2,7 +2,7 @@ import React from 'react';
 import { getUserAvatar } from '@/utils/avatar';
 import confetti from 'canvas-confetti';
 import Image from 'next/image';
-import { TeamFlag } from './TeamFlag';
+import { TeamFlag } from './ui/TeamFlag';
 import { formatMatchTime, formatMatchStage } from '@/utils/format';
 
 interface LeaderboardTabProps {

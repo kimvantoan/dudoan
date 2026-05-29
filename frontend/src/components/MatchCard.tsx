@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { TeamFlag } from './TeamFlag';
-import { MatchCountdown } from './MatchCountdown';
+import { TeamFlag } from './ui/TeamFlag';
+import { MatchCountdown } from './ui/MatchCountdown';
 import { formatMatchTime, formatMatchStage } from '@/utils/format';
 
 interface MatchCardProps {
