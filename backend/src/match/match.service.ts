@@ -773,7 +773,7 @@ export class MatchService {
   }
 
   async getTeamsAndSquads(): Promise<any[]> {
-    const cacheKey = 'wc_teams_and_squads';
+    const cacheKey = 'wc_teams_and_squads_v2';
     const cached = await this.cacheManager.get<any[]>(cacheKey);
     if (cached) {
       return cached;
@@ -789,19 +789,17 @@ export class MatchService {
         }
       }
 
-      // 2. Lấy danh sách bảng đấu từ API để map nhóm (group) cho các đội
-      const standingsResponse = await this.fetchFromApi('/v4/competitions/WC/standings?season=2026');
-      const teamGroupMap = new Map<number, string>();
-      if (standingsResponse && standingsResponse.standings) {
-        for (const st of standingsResponse.standings) {
-          const groupName = st.group;
-          if (st.table) {
-            for (const row of st.table) {
-              if (row.team) {
-                teamGroupMap.set(row.team.id, groupName);
-              }
-            }
-          }
+      // 2. Lấy danh sách bảng đấu từ matches trong DB (vì API standings.group trả về null cho 2026)
+      const teamGroupMap = new Map<string, string>();
+      const matches = await this.matchRepository.find({
+        where: { stage: 'GROUP_STAGE' }
+      });
+      for (const m of matches) {
+        if (m.groupName) {
+          // Chuẩn hóa GROUP_A -> Group A
+          const normalizedGroup = m.groupName.replace('GROUP_', 'Group ');
+          teamGroupMap.set(m.homeTeam, normalizedGroup);
+          teamGroupMap.set(m.awayTeam, normalizedGroup);
         }
       }
 
@@ -826,7 +824,8 @@ export class MatchService {
           ? (continentTranslation[parentArea] || parentArea)
           : 'Khác / Chưa Phân Nhóm';
 
-        const group = t.id ? (teamGroupMap.get(t.id) || 'Chưa chia bảng') : 'Chưa chia bảng';
+        const teamName = t.shortName || t.name;
+        const group = teamGroupMap.get(teamName) || 'Chưa chia bảng';
 
         return {
           id: t.id,
