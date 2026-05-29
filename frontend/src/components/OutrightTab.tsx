@@ -492,7 +492,7 @@ export function OutrightTab({
                   <p className="text-[11px] text-amber-400/90 leading-relaxed pl-1.5 bg-amber-950/25 border border-amber-900/30 p-3 rounded-xl flex items-start gap-2">
                     <span>💡</span>
                     <span>
-                      <strong>Hướng dẫn:</strong> Giữ chuột hoặc chạm cảm ứng vào biểu tượng ☰ của đội tuyển và kéo lên/xuống để đổi thứ tự trong bảng. 2 đội đứng đầu sẽ được dự đoán giành vé đi tiếp!
+                      <strong>Hướng dẫn:</strong> Giữ chuột hoặc chạm cảm ứng vào bất kỳ vị trí nào trên thẻ đội và kéo lên/xuống để đổi thứ tự trong bảng. 2 đội đứng đầu sẽ được dự đoán giành vé đi tiếp!
                     </span>
                   </p>
 
@@ -537,22 +537,15 @@ export function OutrightTab({
                                         <div
                                           ref={providedDraggable.innerRef}
                                           {...providedDraggable.draggableProps}
+                                          {...providedDraggable.dragHandleProps}
                                           className={`flex items-center justify-between p-3 rounded-xl border text-xs transition-all ${snapshot.isDragging
                                             ? 'bg-indigo-950/40 border-indigo-500 shadow-xl shadow-indigo-950/50 scale-[1.02]'
                                             : isFirstOrSecond
                                               ? 'bg-indigo-950/15 border-indigo-900/40 hover:border-indigo-800/60'
                                               : 'bg-slate-900/75 border-slate-850 hover:border-slate-800'
-                                            }`}
+                                            } ${!isOutrightLocked ? 'cursor-grab active:cursor-grabbing' : ''}`}
                                         >
                                           <div className="flex items-center gap-3 min-w-0">
-                                            {!isOutrightLocked && (
-                                              <div
-                                                {...providedDraggable.dragHandleProps}
-                                                className="text-slate-500 hover:text-slate-350 cursor-grab active:cursor-grabbing p-1 -ml-1 text-sm select-none"
-                                              >
-                                                ☰
-                                              </div>
-                                            )}
                                             <span
                                               className={`w-5 h-5 rounded-full flex items-center justify-center font-black text-[10px] shrink-0 ${index === 0
                                                 ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
