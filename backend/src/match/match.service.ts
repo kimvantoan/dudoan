@@ -35,14 +35,16 @@ export class MatchService {
   ) {}
 
   // 1. Lấy danh sách trận đấu và dự đoán của người dùng
-  async getMatchesForUser(userId: number): Promise<any[]> {
+  async getMatchesForUser(userId?: number): Promise<any[]> {
     const matches = await this.matchRepository.find({
       order: { startTime: 'ASC' },
     });
 
-    const predictions = await this.predictionRepository.find({
-      where: { userId },
-    });
+    const predictions = userId
+      ? await this.predictionRepository.find({
+          where: { userId },
+        })
+      : [];
 
     const predictionMap = new Map<number, Prediction>();
     predictions.forEach((p) => predictionMap.set(p.matchId, p));

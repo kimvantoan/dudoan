@@ -33,12 +33,12 @@ interface AppContextType {
   isSyncingApi: boolean;
   showSuccess: (msg: string) => void;
   showError: (msg: string) => void;
-  fetchData: (authToken: string) => Promise<void>;
+  fetchData: (authToken?: string | null) => Promise<void>;
   handleGoogleLogin: () => void;
   googleLoginUrl: string;
   handleMockLogin: (userId: number) => Promise<void>;
   handleLogout: () => void;
-  handleSavePrediction: (matchId: number) => Promise<void>;
+  handleSavePrediction: (matchId: number, homeVal?: number, awayVal?: number) => Promise<void>;
   handleCreateGroup: (name: string) => Promise<void>;
   handleJoinGroup: (code: string) => Promise<void>;
   handleLeaveGroup: (groupId: number) => Promise<void>;
@@ -90,13 +90,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => setErrorMsg(null), 4000);
   };
 
+  // Sync token state to document.cookie for SSR
+  useEffect(() => {
+    if (token) {
+      document.cookie = `token=${token}; path=/; max-age=604800; SameSite=Lax`;
+    } else {
+      document.cookie = `token=; path=/; max-age=0; SameSite=Lax`;
+    }
+  }, [token]);
+
   // Fetch all initial data
-  const fetchData = useCallback(async (authToken: string) => {
+  const fetchData = useCallback(async (authToken?: string | null) => {
     setIsLoading(true);
     try {
+      const headers: any = {};
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+
       // 1. Fetch matches
       const matchesRes = await fetch(`${API_URL}/matches`, {
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers,
       });
       const matchesData = await matchesRes.json();
       if (matchesData.success) {
@@ -115,32 +129,37 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setPredictionsInput((prev) => ({ ...prev, ...inputs }));
       }
 
-      // 2. Fetch groups
-      const groupsRes = await fetch(`${API_URL}/groups`, {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
-      const groupsData = await groupsRes.json();
-      if (groupsData.success) {
-        setGroups(groupsData.data);
-        if (groupsData.data.length > 0 && !activeGroupId) {
-          setActiveGroupId(groupsData.data[0].id);
-        }
-      }
-
-      // 3. Fetch tournament predictions
-      const tpRes = await fetch(`${API_URL}/tournament-predictions`, {
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
-      const tpData = await tpRes.json();
-      if (tpData.success) {
-        setTournamentPredictions(tpData.data);
-        const inputs = { winner: '', first_out: '', golden_boot: '' };
-        tpData.data.forEach((p: any) => {
-          if (p.type in inputs) {
-            inputs[p.type as keyof typeof inputs] = p.value;
-          }
+      // 2. Fetch groups & tournament predictions if logged in
+      if (authToken) {
+        const groupsRes = await fetch(`${API_URL}/groups`, {
+          headers,
         });
-        setOutrightInput(inputs);
+        const groupsData = await groupsRes.json();
+        if (groupsData.success) {
+          setGroups(groupsData.data);
+          if (groupsData.data.length > 0 && !activeGroupId) {
+            setActiveGroupId(groupsData.data[0].id);
+          }
+        }
+
+        const tpRes = await fetch(`${API_URL}/tournament-predictions`, {
+          headers,
+        });
+        const tpData = await tpRes.json();
+        if (tpData.success) {
+          setTournamentPredictions(tpData.data);
+          const inputs = { winner: '', first_out: '', golden_boot: '' };
+          tpData.data.forEach((p: any) => {
+            if (p.type in inputs) {
+              inputs[p.type as keyof typeof inputs] = p.value;
+            }
+          });
+          setOutrightInput(inputs);
+        }
+      } else {
+        setGroups([]);
+        setTournamentPredictions([]);
+        setOutrightInput({ winner: '', first_out: '', golden_boot: '' });
       }
 
     } catch (err: any) {
@@ -150,11 +169,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [API_URL, activeGroupId]);
 
-  // Load database when token is available
+  // Load database whenever token changes (including null for guests)
   useEffect(() => {
-    if (token) {
-      fetchData(token);
-    }
+    fetchData(token);
   }, [token, fetchData]);
 
   // Fetch leaderboard when active group changes
@@ -234,16 +251,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Prediction Submit
-  const handleSavePrediction = async (matchId: number) => {
+  const handleSavePrediction = async (matchId: number, homeVal?: number, awayVal?: number) => {
     if (!token) return;
-    const input = predictionsInput[matchId];
-    if (!input || input.home === '' || input.away === '') {
-      showError('Vui lòng nhập đầy đủ tỉ số dự đoán!');
-      return;
-    }
+    
+    let homeScore: number;
+    let awayScore: number;
 
-    const homeScore = parseInt(input.home, 10);
-    const awayScore = parseInt(input.away, 10);
+    if (homeVal !== undefined && awayVal !== undefined) {
+      homeScore = homeVal;
+      awayScore = awayVal;
+    } else {
+      const input = predictionsInput[matchId];
+      if (!input || input.home === '' || input.away === '') {
+        showError('Vui lòng nhập đầy đủ tỉ số dự đoán!');
+        return;
+      }
+      homeScore = parseInt(input.home, 10);
+      awayScore = parseInt(input.away, 10);
+    }
 
     if (isNaN(homeScore) || isNaN(awayScore) || homeScore < 0 || awayScore < 0) {
       showError('Tỉ số phải là số tự nhiên >= 0');

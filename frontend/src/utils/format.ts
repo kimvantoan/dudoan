@@ -1,19 +1,25 @@
 export function formatMatchTime(startTimeStr: string): string {
   try {
     const dateObj = new Date(startTimeStr);
-    const formattedDate = dateObj.toLocaleDateString('vi-VN', {
+    const formatter = new Intl.DateTimeFormat('en-US', {
       timeZone: 'Asia/Ho_Chi_Minh',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false,
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric',
     });
-    const formattedTime = dateObj.toLocaleTimeString('vi-VN', {
-      timeZone: 'Asia/Ho_Chi_Minh',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-    return `${formattedTime} - ${formattedDate}`;
+    
+    const parts = formatter.formatToParts(dateObj);
+    const partMap = new Map(parts.map(p => [p.type, p.value]));
+    
+    const hour = partMap.get('hour') || '';
+    const minute = partMap.get('minute') || '';
+    const day = partMap.get('day') || '';
+    const month = partMap.get('month') || '';
+    
+    const timeStr = minute === '00' ? `${parseInt(hour, 10)}h` : `${parseInt(hour, 10)}h${minute}`;
+    return `${timeStr} - ${day}/${month}`;
   } catch (e) {
     return '';
   }

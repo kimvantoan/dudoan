@@ -9,7 +9,7 @@ export class TournamentPrediction {
   @PrimaryColumn({ type: 'enum', enum: ['winner', 'first_out', 'golden_boot', 'group_stage'] })
   type: 'winner' | 'first_out' | 'golden_boot' | 'group_stage';
 
-  @Column({ length: 255 })
+  @Column({ type: 'text' })
   value: string;
 
   @ManyToOne(() => User, (user) => user.tournamentPredictions, { onDelete: 'CASCADE' })
