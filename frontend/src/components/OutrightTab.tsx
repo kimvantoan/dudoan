@@ -71,7 +71,6 @@ export function OutrightTab({
   }, [token, API_URL]);
 
   const [groupPredictions, setGroupPredictions] = useState<{ [groupName: string]: string[] }>({});
-  const [draggedTeam, setDraggedTeam] = useState<{ groupName: string; index: number } | null>(null);
 
   // Load saved group stage predictions
   useEffect(() => {
